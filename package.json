@@ -3,6 +3,7 @@
   "displayName": "Arx lang",
   "description": "Syntax highlighting for the Arx HLS language",
   "version": "0.0.1",
+  "repository": {"url": "https://github.com/Kwekker/arx-lang"},
   "engines": {
     "vscode": "^1.97.0"
   },

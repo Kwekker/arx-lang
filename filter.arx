@@ -1,0 +1,167 @@
+# -----------------------------------------------------------------------------
+# (C) Bibix
+# The content below includes confidential, proprietary information of
+# Bibix. All use, disclosure, and/or reproduction is prohibited
+# unless authorized in writing. All rights reserved.
+# -----------------------------------------------------------------------------
+# File         : filter.arx
+# Description  : low-pass filter for GFSK demo
+# Author       : Sabih Gerez, Bibix
+#                based on work by Rene Moll (DSE)
+# Creation date: December 7, 2011
+# -----------------------------------------------------------------------------
+# $Rev: 1$
+# $Author: gerezsh$
+# $Date: Sun Mar 12 23:52:34 CET 2023$
+# $Log$
+# -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
+# Direct implementation of a FIR filter (low pass)
+#
+#                 +---+
+#  data_in  --+-->|z-1|------+---> ...
+#             |   +---+      |
+#            +-+            +-+
+#    b(n) -->|x|  b(n+1) -->|x|    ...
+#            +-+            +-+
+#             |              |
+#             +------------->+---> ... --> data_out
+#
+#
+# Coefficients:
+# -1 -2 0 4 8 8 0 -16 -32 -32 0 64 141 206 232 206 141 64 0 -32 -32 -16 0 8 8 4
+#  0 -2 -1
+# 
+# Non-power of two coefficients are decomposed by Spiral (http://spiral.net/)
+#
+# -----------------------------------------------------------------------------
+
+component lpf
+  # Generic - settings
+  # - Datapath - input
+  IN_WL  : generic integer = 9
+  IN_IWL : generic integer = 4
+
+  # - Datapath - output
+  OUT_WL  : generic integer = 37
+  OUT_IWL : generic integer = 32
+
+  # Generic - types
+  T_IN  : generic type = signed(IN_WL,  IN_IWL)
+  T_OUT : generic type = signed(OUT_WL, OUT_IWL)
+
+  # Ports
+  data_in  : in  T_IN
+  data_out : out T_OUT
+
+constant
+  # Coefficient word length
+  COEF_WL : integer = 9
+  COEF_IWL : integer = 9
+
+  COEF_COUNT : integer = 29
+type
+
+  T_COEF : signed(COEF_WL, COEF_IWL)
+  T_MULT : signed(IN_WL + COEF_WL, IN_IWL + COEF_IWL)
+
+  # scaled-by-1024 version of T_12
+  T_out_full: signed(IN_WL+12, IN_IWL+2)
+
+register
+  # Output state
+  out_array : array[COEF_COUNT - 1] of T_IN = 0
+  coefficients : array[COEF_COUNT] of T_COEF = {-1,-2,0,4,8,8,0,-16,-32,-32,0,64,141,206,232,206,141,64,0,-32,-32,-16,0,8,8,4,0,-2,-1}
+
+variable
+  mult_array : array[COEF_COUNT] of T_MULT
+
+  sum_scaled: T_out_full
+
+  result: T_MULT
+
+
+begin
+  # filter coefficients
+  #  0  1 2 3 4 5 6   7   8   9 10 11  12  13  14
+  #  :  : : : : : :   :   :   :  :  :   :   :   :
+  # -1 -2 0 4 8 8 0 -16 -32 -32  0 64 141 206 232 
+
+  #   15  16 17 18  19  20  21 22 23 24 25 26 27 28
+  #    :   :  :  :   :   :   :  :  :  :  :  :  :  :
+  #  206 141 64  0 -32 -32 -16  0  8  8  4  0 -2 -1;
+
+  # non-power-of-2 decompositions obtained by Spiral
+  # 141 = (64-1)*2 + (16-1)
+  # 206 = ((64-1)  + (4+1)*8)*2
+  # 232 = (32-1-2)*8
+
+  # Filter implementation
+
+  for n in 0:COEF_COUNT-1
+    mult_array[n] = coefficients[n] * data_in
+  end
+
+  out_array[0] = mult_array[0]
+
+  for n in 1:COEF_COUNT-2
+    out_array[n] = out_array[n-1] + mult_array[n]
+  end
+
+  result = out_array[COEF_COUNT - 2] + mult_array[COEF_COUNT - 1]
+
+  # Wire output
+  sum_scaled = reinterpret(T_out_full, result)
+  data_out = convert(T_OUT, sum_scaled)
+
+end
+
+# -----------------------------------------------------------------------------
+# top: instantiate lpf twice, once for I and once for Q channel
+# -----------------------------------------------------------------------------
+
+component top
+  # Generic - settings
+  # - Datapath - input
+  IN_WL  : generic integer = 9
+  IN_IWL : generic integer = 4
+
+  # - Datapath - output
+  OUT_WL  : generic integer = 5
+  OUT_IWL : generic integer = 1
+
+    # Generic - types
+  T_IN  : generic type = signed(IN_WL,  IN_IWL)
+  T_OUT : generic type = signed(OUT_WL, OUT_IWL, sat, trunc)
+
+  # Ports
+  data_in_i:  in  T_IN
+  data_in_q:  in  T_IN
+  data_out_i: out T_OUT
+  data_out_q: out T_OUT
+
+generate
+  lpf_i: lpf
+    IN_WL   = IN_WL
+    IN_IWL  = IN_IWL
+    OUT_WL  = OUT_WL
+    OUT_IWL = OUT_IWL
+    T_IN    = T_IN 
+    T_OUT   = T_OUT
+    data_in  => data_in_i
+    data_out => data_out_i
+
+  lpf_q: lpf
+    IN_WL   = IN_WL
+    IN_IWL  = IN_IWL
+    OUT_WL  = OUT_WL
+    OUT_IWL = OUT_IWL
+    T_IN    = T_IN 
+    T_OUT   = T_OUT
+    data_in  => data_in_q
+    data_out => data_out_q
+begin
+
+end

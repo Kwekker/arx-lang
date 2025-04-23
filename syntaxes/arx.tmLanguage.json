@@ -1,0 +1,111 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Arx",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#constants"
+		},
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#flows"
+		},
+		{
+			"include": "#variables"
+		},
+		{
+			"include": "#symbols"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.arx",
+				"match": "\\b(component|constant|type|variable|register|begin|generate)\\b"
+			}]
+		},
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.number-sign.arx",
+					"match": "#.*"
+				}
+			]
+		},
+		"constants": {
+			"patterns": [
+				{
+					"name": "constant.numeric.arx",
+					"match": "\\b([\\d\\.]{2,}|\\d)\\b"
+				}
+			]
+		},
+		"flows": {
+			"patterns": [
+				{
+					"match": "(for)(?:\\s+[\\w_]+\\s+)(in)",
+					"captures": {
+						"1": {"name":"keyword.control.arx"},
+						"2": {"name":"keyword.control.arx"}
+					}
+				},
+				{
+					"name": "keyword.control.other.arx",
+					"match": "\\b(when|case|end|if|for|else)\\b"
+				},
+				{
+					"name":"keyword.control.less.arx",
+					"match": "\\b(generic|array)\\b"
+				}
+			]
+		},
+		"variables": {
+
+			"patterns": [
+				{
+					"match": "(:\\s+)([\\w_-]+)(\\s+(=|$))",
+					"captures": {
+						"1": {"name": "keyword.operator.arx"},
+						"2": {"name":"storage.type.arx"}
+					}
+				},
+				{
+					"match": "(convert|reinterpret)\\s*\\(([\\w_]+)(?:\\s*,\\s*[\\w_]+\\s*\\))",
+					"captures": {
+						"1": {"name":"keyword.control.arx"},
+						"2": {"name":"storage.type.arx"}
+					}
+				},
+				{
+					"match": "((?:of|in|out)\\s+)([\\w_-]+)(\\s+(=|$))",
+					"captures": {
+						"1": {"name": "keyword.control.less.arx"},
+						"2": {"name":"storage.type.arx"}
+					}
+				},
+				{
+					"name":"storage.type.arx",
+					"match": "\\b(integer|signed|unsigned|boolean)\\b"
+				}
+
+			]
+		},
+		"symbols": {
+			"patterns": [
+				{
+					"name": "keyword.operator",
+					"match": "[\\+\\-\\*\\./,=:\\>\\<]"
+				},
+				{
+					"name": "keyword.operator",
+					"match": "\\b(not|or|and|xor)\\b"
+				}
+			]
+		}
+	},
+	"scopeName": "source.arx"
+}

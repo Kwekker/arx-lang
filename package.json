@@ -1,0 +1,38 @@
+{
+  "name": "arx-lang",
+  "displayName": "Arx lang",
+  "description": "Syntax highlighting for the Arx HLS language",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.97.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "arx",
+        "aliases": [
+          "Arx",
+          "arx"
+        ],
+        "extensions": [
+          "arx"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "arx",
+        "scopeName": "source.arx",
+        "path": "./syntaxes/arx.tmLanguage.json"
+      }
+    ]
+  },
+  "devDependencies": {
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
+  }
+}

@@ -1,0 +1,1 @@
+cp arx-lang/ /home/kwek/Documents/university/IDSP/arx-lang /home/kwek/.vscode/extensions -r
